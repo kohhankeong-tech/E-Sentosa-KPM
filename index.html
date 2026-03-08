@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>E-Sentosa - Versi Emoji</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #FF7E7E;
+            --secondary: #6C5CE7;
+            --bg: #FFFAF1;
+            --text-main: #2D3436;
+            --card-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: #f0f2f5; display: flex; justify-content: center; min-height: 100vh; }
+
+        .app-container {
+            width: 100%; max-width: 430px; background: var(--bg);
+            min-height: 100vh; position: relative; display: flex; flex-direction: column;
+            box-shadow: 0 0 50px rgba(0,0,0,0.1); overflow-x: hidden;
+        }
+
+        header { padding: 25px 20px; display: flex; justify-content: space-between; align-items: center; background: var(--bg); }
+        .logo h1 { font-size: 24px; color: var(--text-main); font-weight: 800; }
+        .logo p { font-size: 11px; color: #E67E22; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .profile-avatar {
+            width: 45px; height: 45px; border-radius: 15px; background: #eee;
+            overflow: hidden; cursor: pointer; border: 2px solid white; box-shadow: var(--card-shadow);
+        }
+        .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+        .screen { display: none; padding: 0 20px 120px 20px; flex: 1; overflow-y: auto; }
+        .screen.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Banner */
+        .hero-card {
+            background: linear-gradient(135deg, #FF7E5F, #FEB47B);
+            padding: 25px; border-radius: 28px; color: white; margin-bottom: 25px;
+            box-shadow: 0 15px 30px rgba(255, 126, 95, 0.25); position: relative;
+        }
+        .hero-card h2 { font-size: 20px; font-weight: 800; }
+        
+        /* Kalendar Emoji */
+        .calendar-section { background: white; border-radius: 24px; padding: 15px; margin-bottom: 25px; box-shadow: var(--card-shadow); }
+        .cal-header { font-size: 12px; font-weight: 800; color: #A0AEC0; margin-bottom: 10px; text-transform: uppercase; }
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+        .cal-day { 
+            aspect-ratio: 1; border-radius: 10px; background: #F7FAFC; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            position: relative; transition: 0.3s;
+        }
+        .cal-day .day-num { font-size: 9px; font-weight: 700; color: #CBD5E0; position: absolute; top: 4px; left: 4px; }
+        .cal-day .day-emoji { font-size: 16px; margin-top: 5px; }
+
+        /* Forms */
+        .section-title { font-size: 11px; font-weight: 800; color: #A0AEC0; text-transform: uppercase; margin: 20px 0 10px 5px; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 11px; font-weight: 800; color: #718096; margin-bottom: 6px; margin-left: 5px; }
+        .text-input { width: 100%; border-radius: 18px; border: 2px solid #EDF2F7; padding: 14px; font-size: 14px; outline: none; background: white; transition: 0.2s; }
+        .text-input:focus { border-color: var(--primary); }
+
+        /* Profile Specific */
+        .profile-header-card { background: linear-gradient(135deg, #6C5CE7, #A29BFE); padding: 30px 20px; border-radius: 28px; color: white; margin-bottom: 20px; text-align: center; }
+        .large-avatar-upload { width: 100px; height: 100px; border-radius: 35px; background: white; margin: 0 auto 15px auto; overflow: hidden; position: relative; border: 4px solid rgba(255,255,255,0.3); }
+        .large-avatar-upload img { width: 100%; height: 100%; object-fit: cover; }
+        .large-avatar-upload .overlay { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.4); color: white; font-size: 9px; padding: 4px 0; }
+
+        /* Diary Cards - FIXED LAYOUT */
+        .entry-card { background: white; padding: 20px; border-radius: 22px; box-shadow: var(--card-shadow); margin-bottom: 20px; display: block; overflow: hidden; }
+        .entry-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .entry-emoji { width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+        .entry-header-info h4 { font-size: 16px; font-weight: 800; color: var(--text-main); }
+        .entry-header-info span { font-size: 10px; color: #A0AEC0; font-weight: 700; }
+        
+        .entry-content { margin-top: 10px; }
+        .entry-content p { font-size: 14px; color: #4A5568; line-height: 1.6; word-wrap: break-word; margin-bottom: 12px; }
+        .entry-image { width: 100%; border-radius: 15px; display: block; object-fit: cover; max-height: 250px; }
+
+        /* Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); backdrop-filter: blur(8px); z-index: 1000; display: none; justify-content: center; align-items: flex-end; }
+        .modal-content { background: white; width: 100%; max-width: 430px; padding: 30px 20px; border-radius: 35px 35px 0 0; max-height: 90vh; overflow-y: auto; }
+
+        .emoji-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 10px 0; }
+        .emoji-opt { padding: 12px 5px; border: 2px solid #F7FAFC; border-radius: 18px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .emoji-opt.selected { border-color: var(--primary); background: #FFF5F5; }
+        .emoji-opt span { display: block; font-size: 24px; }
+        .emoji-opt label { font-size: 10px; font-weight: 700; color: #4A5568; }
+
+        .cat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+        .cat-opt { padding: 10px; border: 2px solid #F7FAFC; border-radius: 14px; text-align: center; font-size: 11px; font-weight: 700; color: #718096; cursor: pointer; }
+        .cat-opt.selected { border-color: var(--primary); background: #FFF5F5; color: var(--primary); }
+
+        /* WhatsApp Button */
+        .wa-float {
+            background: white; border-radius: 20px; padding: 15px; margin-top: 10px;
+            display: flex; align-items: center; gap: 15px; box-shadow: var(--card-shadow);
+            border: 1px solid #e2e8f0; cursor: pointer;
+        }
+        .wa-icon { width: 40px; height: 40px; background: #25D366; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; }
+
+        /* Navigation */
+        .nav-bar { position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); width: 90%; height: 75px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); border-radius: 30px; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.08); z-index: 500; }
+        .nav-item { color: #CBD5E0; text-align: center; cursor: pointer; flex: 1; transition: 0.3s; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item span { font-size: 10px; font-weight: 800; display: block; margin-top: 4px; }
+        .btn-plus { width: 60px; height: 60px; background: linear-gradient(135deg, #FF7E7E, #FF9999); border-radius: 20px; margin-top: -50px; border: 5px solid var(--bg); display: flex; align-items: center; justify-content: center; color: white; font-size: 30px; box-shadow: 0 8px 20px rgba(255,126,126,0.3); }
+
+        .btn-main { width: 100%; padding: 16px; border-radius: 18px; border: none; background: var(--primary); color: white; font-weight: 800; cursor: pointer; margin-top: 10px; }
+        .upload-area { width: 100%; height: 100px; border: 2px dashed #CBD5E0; border-radius: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; }
+        .upload-area img { width: 100%; height: 100%; object-fit: cover; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <div class="logo">
+            <h1>E-Sentosa ✨</h1>
+            <p>Zon Selesa Anda</p>
+        </div>
+        <div class="profile-avatar" onclick="showScreen('profile')">
+            <img id="header-avatar" src="https://ui-avatars.com/api/?name=User&background=random" alt="Profil">
+        </div>
+    </header>
+
+    <!-- Halaman Utama -->
+    <div id="screen-home" class="screen active">
+        <div class="hero-card">
+            <h2>Hai, <span id="display-name">Kawan</span>! 👋</h2>
+            <p style="opacity: 0.9; font-size: 14px;">Bagaimana perasaanmu hari ini?</p>
+        </div>
+
+        <div class="calendar-section">
+            <div class="cal-header">📅 Rekod Sejahtera (Bulan Ini)</div>
+            <div class="cal-grid" id="calendar-grid"></div>
+        </div>
+
+        <div class="section-title">💬 Perlukan Seseorang?</div>
+        <div class="wa-float" onclick="contactKelvin()">
+            <div class="wa-icon">
+                <svg width="24" height="24" fill="white" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.941-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217s.231.006.332.013c.101.007.237-.038.371.29.134.328.461 1.126.501 1.212.041.086.067.188.01.303-.057.115-.086.188-.173.289l-.26.303c-.086.101-.177.211-.076.383.101.173.447.739.957 1.196.657.587 1.21.768 1.383.854.173.086.274.072.375-.043.101-.116.433-.505.549-.678.116-.173.231-.144.39-.086.158.058 1.01.477 1.183.563.173.087.288.13.332.202.043.072.043.419-.101.824z"/></svg>
+            </div>
+            <div style="flex:1">
+                <div style="font-weight: 800; font-size: 14px;">Tanya Cikgu Kelvin</div>
+                <div style="font-size: 11px; color:#718096">"Cikgu sedia membantu anda."</div>
+            </div>
+        </div>
+
+        <div class="section-title">✨ Luahan Terkini</div>
+        <div id="diary-list"></div>
+    </div>
+
+    <!-- Halaman Profil -->
+    <div id="screen-profile" class="screen">
+        <div class="profile-header-card">
+            <div class="large-avatar-upload" onclick="document.getElementById('profile-upload').click()">
+                <img id="profile-img-preview" src="https://ui-avatars.com/api/?name=User&background=random">
+                <div class="overlay">TUKAR</div>
+                <input type="file" id="profile-upload" hidden accept="image/*" onchange="uploadProfilePic(this)">
+            </div>
+            <h2 id="profile-name-display">Kawan</h2>
+            <p id="profile-class-display" style="font-size: 12px; opacity: 0.8;">Kelas belum diisi</p>
+        </div>
+
+        <div class="input-group">
+            <label>Nama Panggilan</label>
+            <input type="text" id="p-name" class="text-input" placeholder="Nama anda...">
+        </div>
+        <div class="input-group">
+            <label>Kelas</label>
+            <input type="text" id="p-class" class="text-input" placeholder="Contoh: 5 Bijak">
+        </div>
+        <div class="input-group">
+            <label>Hobi</label>
+            <input type="text" id="p-hobby" class="text-input" placeholder="Apa yang anda suka buat?">
+        </div>
+        <div class="input-group">
+            <label>Cerita Diri</label>
+            <textarea id="p-bio" class="text-input" rows="3" placeholder="Ceritakan sedikit tentang diri anda..."></textarea>
+        </div>
+
+        <button class="btn-main" style="background:var(--secondary)" onclick="saveProfile()">Simpan Profil</button>
+    </div>
+
+    <!-- Modal Luahan -->
+    <div class="modal-overlay" id="entry-modal">
+        <div class="modal-content">
+            <h2 style="font-size: 22px; font-weight: 800;">Apa khabar? 🎡</h2>
+            <p style="color:#A0AEC0; font-size: 13px; margin-bottom: 15px;">Kongsi perasaan anda sekarang.</p>
+
+            <label class="section-title" style="margin-left:0">PILIH EMOSI</label>
+            <div class="emoji-grid">
+                <div class="emoji-opt" onclick="selectEmo('😊', 'Gembira', '#FFF9C4')"><span>😊</span><label>Gembira</label></div>
+                <div class="emoji-opt" onclick="selectEmo('😢', 'Sedih', '#E3F2FD')"><span>😢</span><label>Sedih</label></div>
+                <div class="emoji-opt" onclick="selectEmo('😡', 'Marah', '#FFEBEE')"><span>😡</span><label>Marah</label></div>
+                <div class="emoji-opt" onclick="selectEmo('😨', 'Takut', '#E8F5E9')"><span>😨</span><label>Takut</label></div>
+            </div>
+
+            <div id="cat-box" style="display:none">
+                <label class="section-title" style="margin-left:0">KATEGORI</label>
+                <div id="cat-grid-container" class="cat-grid"></div>
+            </div>
+
+            <label class="section-title" style="margin-left:0">GAMBAR (PILIHAN)</label>
+            <div class="upload-area" onclick="document.getElementById('entry-upload').click()">
+                <span id="upload-label" style="font-size:12px; color:#A0AEC0; font-weight:700">📸 Tambah Gambar</span>
+                <img id="entry-img-preview" style="display:none">
+                <input type="file" id="entry-upload" hidden accept="image/*" onchange="previewEntryImg(this)">
+            </div>
+
+            <label class="section-title" style="margin-left:0">LUAHAN HATI</label>
+            <textarea id="entry-note" class="text-input" rows="3" placeholder="Tulis sesuatu..."></textarea>
+
+            <button class="btn-main" id="btn-save" onclick="saveEntry()">Simpan Luahan ✨</button>
+            <button onclick="toggleModal(false)" style="width:100%; border:none; background:none; color:#CBD5E0; margin-top:12px; font-weight:700;">Batalkan</button>
+        </div>
+    </div>
+
+    <nav class="nav-bar">
+        <div class="nav-item active" id="nav-home" onclick="showScreen('home')">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+            <span>Utama</span>
+        </div>
+        <div class="btn-plus" onclick="toggleModal(true)">+</div>
+        <div class="nav-item" id="nav-profile" onclick="showScreen('profile')">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span>Profil</span>
+        </div>
+    </nav>
+</div>
+
+<script>
+    const cats = {
+        'Gembira': ['Syukur', 'Ceria', 'Bangga'],
+        'Sedih': ['Kecewa', 'Sunyi', 'Rindu'],
+        'Marah': ['Geram', 'Benci', 'Bengang'],
+        'Takut': ['Cemas', 'Bimbang', 'Malu']
+    };
+
+    let db = JSON.parse(localStorage.getItem('es_data_v8')) || [];
+    let user = JSON.parse(localStorage.getItem('es_user_v8')) || { name: 'Kawan', class: '', hobby: '', bio: '', avatar: '' };
+    
+    let curEmo = null;
+    let curCat = null;
+    let curImg = "";
+
+    function showScreen(name) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById('screen-'+name).classList.add('active');
+        document.getElementById('nav-'+name).classList.add('active');
+        if(name === 'home') renderHome();
+    }
+
+    function toggleModal(show) {
+        document.getElementById('entry-modal').style.display = show ? 'flex' : 'none';
+        if(show) {
+            curEmo = null; curCat = null; curImg = "";
+            document.getElementById('entry-note').value = "";
+            document.getElementById('cat-box').style.display = "none";
+            document.getElementById('entry-img-preview').style.display = "none";
+            document.getElementById('upload-label').style.display = "block";
+            document.querySelectorAll('.emoji-opt').forEach(el => el.classList.remove('selected'));
+        }
+    }
+
+    function selectEmo(emoji, label, color) {
+        curEmo = { emoji, label, color };
+        document.querySelectorAll('.emoji-opt').forEach(opt => opt.classList.toggle('selected', opt.innerText.includes(label)));
+        
+        const grid = document.getElementById('cat-grid-container');
+        grid.innerHTML = cats[label].map(c => `<div class="cat-opt" onclick="selectCat('${c}', this)">${c}</div>`).join('');
+        document.getElementById('cat-box').style.display = "block";
+    }
+
+    function selectCat(c, el) {
+        curCat = c;
+        document.querySelectorAll('.cat-opt').forEach(opt => opt.classList.remove('selected'));
+        el.classList.add('selected');
+    }
+
+    function compressImg(file, callback) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const max = 500;
+                let w = img.width, h = img.height;
+                if(w > max) { h *= max/w; w = max; }
+                canvas.width = w; canvas.height = h;
+                canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                callback(canvas.toDataURL('image/jpeg', 0.6));
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function uploadProfilePic(input) {
+        if(input.files[0]) {
+            compressImg(input.files[0], (base64) => {
+                user.avatar = base64;
+                document.getElementById('profile-img-preview').src = base64;
+                document.getElementById('header-avatar').src = base64;
+            });
+        }
+    }
+
+    function previewEntryImg(input) {
+        if(input.files[0]) {
+            compressImg(input.files[0], (base64) => {
+                curImg = base64;
+                document.getElementById('entry-img-preview').src = base64;
+                document.getElementById('entry-img-preview').style.display = "block";
+                document.getElementById('upload-label').style.display = "none";
+            });
+        }
+    }
+
+    function saveProfile() {
+        user.name = document.getElementById('p-name').value || 'Kawan';
+        user.class = document.getElementById('p-class').value;
+        user.hobby = document.getElementById('p-hobby').value;
+        user.bio = document.getElementById('p-bio').value;
+        
+        localStorage.setItem('es_user_v8', JSON.stringify(user));
+        updateUI();
+        alert("Profil disimpan!");
+        showScreen('home');
+    }
+
+    function saveEntry() {
+        const note = document.getElementById('entry-note').value.trim();
+        if(!curEmo || !curCat || !note) return alert("Sila lengkapkan emosi, kategori dan luahan.");
+
+        const btn = document.getElementById('btn-save');
+        btn.innerText = "Menyimpan...";
+        btn.disabled = true;
+
+        const entry = {
+            id: Date.now(),
+            emoji: curEmo.emoji,
+            label: curCat,
+            color: curEmo.color,
+            note: note,
+            img: curImg,
+            date: new Date().getDate(),
+            fullDate: new Date().toLocaleDateString('ms-MY'),
+            time: new Date().toLocaleTimeString('ms-MY', {hour:'2-digit', minute:'2-digit'})
+        };
+
+        db.unshift(entry);
+        try {
+            localStorage.setItem('es_data_v8', JSON.stringify(db));
+            renderHome();
+            toggleModal(false);
+        } catch(e) {
+            alert("Memori penuh! Padam catatan lama.");
+        }
+        btn.innerText = "Simpan Luahan ✨";
+        btn.disabled = false;
+    }
+
+    function renderHome() {
+        const list = document.getElementById('diary-list');
+        list.innerHTML = db.length ? db.map(i => `
+            <div class="entry-card">
+                <div class="entry-top">
+                    <div class="entry-emoji" style="background:${i.color}">${i.emoji}</div>
+                    <div class="entry-header-info">
+                        <h4>${i.label}</h4>
+                        <span>${i.fullDate} • ${i.time}</span>
+                    </div>
+                </div>
+                <div class="entry-content">
+                    <p>${i.note}</p>
+                    ${i.img ? `<img src="${i.img}" class="entry-image">` : ''}
+                </div>
+            </div>
+        `).join('') : '<p style="text-align:center; color:#A0AEC0; padding:20px;">Belum ada luahan hari ini.</p>';
+
+        renderCalendar();
+    }
+
+    function renderCalendar() {
+        const grid = document.getElementById('calendar-grid');
+        const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+        let html = "";
+        
+        for(let d=1; d<=daysInMonth; d++) {
+            // Cari rekod terakhir untuk hari tersebut
+            const record = [...db].reverse().find(entry => entry.date === d);
+            
+            if(record) {
+                html += `
+                <div class="cal-day" style="background:${record.color}">
+                    <span class="day-num" style="color:rgba(0,0,0,0.3)">${d}</span>
+                    <span class="day-emoji">${record.emoji}</span>
+                </div>`;
+            } else {
+                html += `
+                <div class="cal-day">
+                    <span class="day-num">${d}</span>
+                </div>`;
+            }
+        }
+        grid.innerHTML = html;
+    }
+
+    function updateUI() {
+        document.getElementById('display-name').innerText = user.name;
+        document.getElementById('profile-name-display').innerText = user.name;
+        document.getElementById('profile-class-display').innerText = user.class || 'Kelas belum diisi';
+        document.getElementById('p-name').value = user.name;
+        document.getElementById('p-class').value = user.class;
+        document.getElementById('p-hobby').value = user.hobby;
+        document.getElementById('p-bio').value = user.bio;
+        if(user.avatar) {
+            document.getElementById('header-avatar').src = user.avatar;
+            document.getElementById('profile-img-preview').src = user.avatar;
+        }
+    }
+
+    function contactKelvin() {
+        window.open("https://wa.me/601173981207?text=Hai%20Cikgu%20Kelvin,%20saya%20perlukan%20seseorang%20untuk%20berbual.", "_blank");
+    }
+
+    window.onload = () => {
+        updateUI();
+        renderHome();
+    };
+</script>
+
+</body>
+</html>

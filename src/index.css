@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+--font-comic: 'Comic Sans MS', 'Comic Sans', cursive;
+}
+
+body {
+margin: 0;
+padding: 0;
+background-color: #FFFDF5;
+font-family: var(--font-comic);
+-webkit-font-smoothing: antialiased;
+-moz-osx-font-smoothing: grayscale;
+overflow-x: hidden;
+}
+
+/* Mengelakkan pemilihan teks pada elemen interaktif */
+button, a {
+-webkit-tap-highlight-color: transparent;
+user-select: none;
+}
+
+/* Animasi Fade In untuk pertukaran halaman */
+.view-enter {
+opacity: 0;
+transform: translateY(10px);
+}
+
+.view-enter-active {
+opacity: 1;
+transform: translateY(0);
+transition: opacity 300ms, transform 300ms;
+}
+
+/* Custom Scrollbar untuk paparan kemas */
+::-webkit-scrollbar {
+width: 5px;
+}
+
+::-webkit-scrollbar-track {
+background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+background: #fed7aa;
+border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+background: #fdba74;
+}
