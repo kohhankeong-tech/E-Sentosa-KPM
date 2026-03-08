@@ -43,7 +43,8 @@
             padding: 25px; border-radius: 28px; color: white; margin-bottom: 25px;
             box-shadow: 0 15px 30px rgba(255, 126, 95, 0.25); position: relative;
         }
-        .hero-card h2 { font-size: 20px; font-weight: 800; }
+        .hero-card h2 { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+        .streak-badge { background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 800; display: flex; align-items: center; gap: 4px; }
         
         /* Kalendar Emoji */
         .calendar-section { background: white; border-radius: 24px; padding: 15px; margin-bottom: 25px; box-shadow: var(--card-shadow); }
@@ -95,6 +96,11 @@
         .cat-opt { padding: 10px; border: 2px solid #F7FAFC; border-radius: 14px; text-align: center; font-size: 11px; font-weight: 700; color: #718096; cursor: pointer; }
         .cat-opt.selected { border-color: var(--primary); background: #FFF5F5; color: var(--primary); }
 
+        /* Counselor Dashboard Styles */
+        .counselor-auth-box { margin-top: 40px; padding: 25px; border: 2px dashed #E2E8F0; border-radius: 25px; text-align: center; background: #fff; }
+        .counselor-entry-log { background: white; padding: 15px; border-radius: 18px; margin-bottom: 12px; border: 1px solid #edf2f7; }
+        .student-meta { font-size: 10px; font-weight: 800; color: var(--secondary); text-transform: uppercase; margin-bottom: 5px; }
+
         /* WhatsApp Button */
         .wa-float {
             background: white; border-radius: 20px; padding: 15px; margin-top: 10px;
@@ -131,8 +137,13 @@
     <!-- Halaman Utama -->
     <div id="screen-home" class="screen active">
         <div class="hero-card">
-            <h2>Hai, <span id="display-name">Kawan</span>! 👋</h2>
-            <p style="opacity: 0.9; font-size: 14px;">Bagaimana perasaanmu hari ini?</p>
+            <div style="flex:1">
+                <h2 id="welcome-title">Hai, <span id="display-name">Kawan</span>! 👋</h2>
+                <p style="opacity: 0.9; font-size: 14px;">Bagaimana perasaanmu hari ini?</p>
+            </div>
+            <div id="streak-container" class="streak-badge" style="display:none">
+                🔥 <span id="streak-count">0</span> Hari
+            </div>
         </div>
 
         <div class="calendar-section">
@@ -185,6 +196,23 @@
         </div>
 
         <button class="btn-main" style="background:var(--secondary)" onclick="saveProfile()">Simpan Profil</button>
+
+        <!-- FUNGSI BAHARU: Akses Guru -->
+        <div class="counselor-auth-box">
+            <div style="font-size: 24px; margin-bottom: 5px;">🛡️</div>
+            <div style="font-size: 11px; font-weight: 800; color: #718096; margin-bottom: 10px;">AKSES KHAS GURU KAUNSELING</div>
+            <input type="password" id="counselor-code" class="text-input" placeholder="Kod Laluan" style="text-align: center; font-size: 12px; margin-bottom: 10px;">
+            <button onclick="accessCounselorDashboard()" style="background:none; border:none; color:var(--secondary); font-weight:800; font-size:12px; cursor:pointer; text-decoration:underline">Buka Dashboard</button>
+        </div>
+    </div>
+
+    <!-- Halaman Dashboard Guru (Tersembunyi) -->
+    <div id="screen-counselor" class="screen">
+        <div class="section-title" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>DASHBOARD GURU KAUNSELING</span>
+            <button onclick="showScreen('profile')" style="border:none; background:none; font-weight:800; color:var(--primary)">Keluar</button>
+        </div>
+        <div id="counselor-log-list"></div>
     </div>
 
     <!-- Modal Luahan -->
@@ -252,8 +280,13 @@
     function showScreen(name) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.getElementById('screen-'+name).classList.add('active');
-        document.getElementById('nav-'+name).classList.add('active');
+        
+        const target = document.getElementById('screen-'+name);
+        if(target) target.classList.add('active');
+        
+        const navTarget = document.getElementById('nav-'+name);
+        if(navTarget) navTarget.classList.add('active');
+        
         if(name === 'home') renderHome();
     }
 
@@ -345,6 +378,8 @@
 
         const entry = {
             id: Date.now(),
+            studentName: user.name,
+            studentClass: user.class || 'Tiada Kelas',
             emoji: curEmo.emoji,
             label: curCat,
             color: curEmo.color,
@@ -352,7 +387,8 @@
             img: curImg,
             date: new Date().getDate(),
             fullDate: new Date().toLocaleDateString('ms-MY'),
-            time: new Date().toLocaleTimeString('ms-MY', {hour:'2-digit', minute:'2-digit'})
+            time: new Date().toLocaleTimeString('ms-MY', {hour:'2-digit', minute:'2-digit'}),
+            timestamp: Date.now()
         };
 
         db.unshift(entry);
@@ -365,6 +401,65 @@
         }
         btn.innerText = "Simpan Luahan ✨";
         btn.disabled = false;
+    }
+
+    // FUNGSI BAHARU: Pengiraan Streak
+    function calculateStreak() {
+        if (db.length === 0) return 0;
+        
+        let streak = 0;
+        let lastDate = new Date();
+        lastDate.setHours(0,0,0,0);
+        
+        // Dapatkan tarikh unik sahaja (sebab murid mungkin tulis banyak kali sehari)
+        const uniqueDates = [...new Set(db.map(e => {
+            const d = new Date(e.timestamp);
+            d.setHours(0,0,0,0);
+            return d.getTime();
+        }))].sort((a,b) => b - a);
+
+        for(let i=0; i < uniqueDates.length; i++) {
+            const entryDate = new Date(uniqueDates[i]);
+            const diff = (lastDate - entryDate) / (1000 * 60 * 60 * 24);
+            
+            if(diff === 0 || diff === 1) {
+                streak++;
+                lastDate = entryDate;
+            } else {
+                break;
+            }
+        }
+        return streak;
+    }
+
+    // FUNGSI BAHARU: Akses Dashboard Guru
+    function accessCounselorDashboard() {
+        const code = document.getElementById('counselor-code').value;
+        if(code === "KPM2025") {
+            showScreen('counselor');
+            renderCounselorDashboard();
+        } else {
+            alert("Kod laluan salah!");
+        }
+    }
+
+    function renderCounselorDashboard() {
+        const list = document.getElementById('counselor-log-list');
+        // Dalam local storage ini, kita hanya nampak data murid semasa. 
+        // Jika aplikasi ini diletakkan di server/firebase, list ini akan tarik semua data murid.
+        list.innerHTML = db.length ? db.map(i => `
+            <div class="counselor-entry-log">
+                <div class="student-meta">${i.studentName} (${i.studentClass}) • ${i.fullDate}</div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <span style="font-size:20px">${i.emoji}</span>
+                    <div style="flex:1">
+                        <div style="font-size:12px; font-weight:800">${i.label}</div>
+                        <div style="font-size:12px; color:#4a5568">"${i.note}"</div>
+                    </div>
+                </div>
+                ${i.img ? `<img src="${i.img}" style="width:100%; border-radius:10px; margin-top:10px; max-height:150px; object-fit:cover;">` : ''}
+            </div>
+        `).join('') : '<p style="text-align:center; color:#A0AEC0; font-size:12px;">Tiada rekod murid untuk dipaparkan.</p>';
     }
 
     function renderHome() {
@@ -386,6 +481,16 @@
         `).join('') : '<p style="text-align:center; color:#A0AEC0; padding:20px;">Belum ada luahan hari ini.</p>';
 
         renderCalendar();
+        
+        // Kemaskini Paparan Streak
+        const streak = calculateStreak();
+        const streakCont = document.getElementById('streak-container');
+        if(streak > 0) {
+            streakCont.style.display = "flex";
+            document.getElementById('streak-count').innerText = streak;
+        } else {
+            streakCont.style.display = "none";
+        }
     }
 
     function renderCalendar() {
@@ -394,8 +499,10 @@
         let html = "";
         
         for(let d=1; d<=daysInMonth; d++) {
-            // Cari rekod terakhir untuk hari tersebut
-            const record = [...db].reverse().find(entry => entry.date === d);
+            const record = [...db].reverse().find(entry => {
+                const entryDate = new Date(entry.timestamp);
+                return entryDate.getDate() === d && entryDate.getMonth() === new Date().getMonth();
+            });
             
             if(record) {
                 html += `
